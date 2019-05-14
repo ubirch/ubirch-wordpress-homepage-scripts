@@ -4,10 +4,10 @@ function verify(){
         created: document.getElementById("created").value,
         workshop: document.getElementById("workshop").value
     };
-    let str = "{ \"created\": \"" + certificate.created + "\", \"name\": \"" + certificate.name + "\", \"workshop\": \"" + certificate.workshop + "\" }";
+    let str = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
     document.getElementById("request_unhashed").innerHTML = str;
 
-    // TODO: hash certificate object
+    // hash certificate object
     var transId = sha512(str);
     document.getElementById("request_hashed").innerHTML = transId;
     // workaround: use transId
