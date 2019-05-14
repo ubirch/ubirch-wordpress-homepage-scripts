@@ -1,70 +1,196 @@
+//////   SETTINGS  ////////
+
+// set ubirch verify REST endpoint
+const verify_api_url = "https://verify.dev.ubirch.com/api/verify";
+// replace with url of seal icon
+const seal_icon_url = "https://letsencrypt.org/images/le-logo-lockonly.png";
+// add blockchain test data as
+//  blockchain: { network_type: {network_info: "info string", url: "url with praefix"}}
+const blockchain_transid_check_url = {
+    ethereum: {
+        testnet: {
+            network_info: "Rinkeby Testnet Network",
+            url: "https://rinkeby.etherscan.io/tx/0x",
+            icon_url: "http://chittagongit.com/images/ethereum-icon/ethereum-icon-28.jpg"
+        }
+    }
+}
+const INFO = {
+    PROCESSING_VERIFICATION_CALL: 1
+}
+const ERROR = {
+    NO_ERROR: 0,
+    CERTIFICATE_DATA_MISSING: 1,
+    CERTIFICATE_ID_CANNOT_BE_FOUND: 2,
+    VERIFICATION_FAILED_EMPTY_RESPONSE: 3,
+    VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE: 4,
+    UNKNOWN_ERROR: 99
+}
+
+function handleError(error) {
+    switch (error) {
+        case ERROR.NO_ERROR:
+            break;
+        case ERROR.CERTIFICATE_DATA_MISSING:
+            displayErrorStr("Certificate data missing - please fill out form!!!");
+            break;
+        case ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND:
+            displayErrorStr("Certificate cannot be found!!!!!");
+            break;
+        case ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE:
+        case ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE:
+            displayErrorStr("Check failed!! Certificat is emptyore doesn't contain seal");
+            break;
+        case ERROR.UNKNOWN_ERROR:
+        default:
+            displayErrorStr("Problem!!! No clue what really happened....!");
+    }
+}
+function handleInfo(info) {
+    switch (info) {
+        case INFO.PROCESSING_VERIFICATION_CALL:
+            displayErrorStr("...processing....");
+            break;
+        case INFO.VERIFICATION_SUCCESSFUL:
+            displayErrorStr("Success!!!!");
+            break;
+    }
+}
+
+//////   CODE  ////////
+
 function verify(){
-    let certificate= {
-        name: document.getElementById("name").value,
-        created: document.getElementById("created").value,
-        workshop: document.getElementById("workshop").value
-    };
-    let str = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
-    document.getElementById("request_unhashed").innerHTML = str;
+    let cert = createCertificate();
+    if (!cert) {
+        handleError(ERROR.CERTIFICATE_DATA_MISSING);
+    } else {
+        // TODO: remove debug statement
+        document.getElementById("request_unhashed").innerHTML = cert;
 
-    // hash certificate object
-    var transId = sha512(str);
-    document.getElementById("request_hashed").innerHTML = transId;
-    // workaround: use transId
-    // let transId = document.getElementById("trans_id").value;
+        // hash certificate object
+        var transId = sha512(cert);
+        // TODO: remove test and debug statement
+        transId = "JumLrC9/VRFsmpf3hLF3cuYn8HxMtSLYvoqnXqxd5t6XyquioxupA3C3Ga5QIS2P+iZzB19CzPYa50JQ9P3U9A==";
+        document.getElementById("request_hashed").innerHTML = transId;
 
+        checkHashOnUbirchBE(transId, checkResponse);
+    }
+}
+
+function createCertificate() {
+    if (document.getElementById("name") && document.getElementById("name").value
+        && document.getElementById("created") && document.getElementById("created").value
+        && document.getElementById("workshop") && document.getElementById("workshop").value ) {
+        let certificate= {
+            name: document.getElementById("name").value,
+            created: document.getElementById("created").value,
+            workshop: document.getElementById("workshop").value
+        };
+        let str = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
+        return str;
+    }
+    return undefined;
+}
+function checkHashOnUbirchBE(hash, checkFkt) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            checkResult(this.responseText);
+        if (this.readyState < 4) {
+            handleInfo(INFO.PROCESSING_VERIFICATION_CALL, true);
         } else {
-            if (this.status == 404) {
-                document.getElementById("result_test").innerHTML = "Certificate cannot be found!!!!!";
-            } else {
-                document.getElementById("result_test").innerHTML = "Problem!!! No clue what really happened....";
+            switch (this.status) {
+                case 200:
+                    checkFkt(this.responseText);
+                    break;
+                case 404:
+                    handleError(ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND, true);
+                    break;
+                default:
+                    handleError(ERROR.UNKNOWN_ERROR, true);
             }
         }
     };
-    xhttp.open("POST", "https://verify.dev.ubirch.com/api/verify", true);
+    xhttp.open("POST", verify_api_url, true);
     xhttp.setRequestHeader("Content-type", "text/plain");
 //    xhttp.setRequestHeader("accept", "application/json");
-    xhttp.send(transId);
-
+    xhttp.send(hash);
 }
-function checkResult(result) {
-    // Success
-    // 1. HTTP Status 200
-    // 2. Key Seal != ''"
+
+function checkResponse(result) {
+    // Success IF
+    // 1. HTTP Status 200 -> if this fkt is called and result isn't empty
+    // 2. Key Seal != ''
 
     if (result) {
         let resultObj = JSON.parse(result);
         if (resultObj) {
             let seal = resultObj["seal"];
             if (seal && seal.length > 0) {
-                document.getElementById("seal-img").setAttribute('class', 'visible');
-                document.getElementById("result_test").innerHTML = "Success!!!! (show green seal)";
-                // TODO: check if Blockchain Transactions exist
+
+                showSeal();
+
+                // check if Blockchain Transactions exist
                 let blockchainTX = resultObj["anchors"];
                 if (blockchainTX && blockchainTX.length>0) {
                     // TODO: show it for each item in array
-                    // TODO: dynamic blockchain check url -> check name and type of block chain tx
-                    let link = "https://rinkeby.etherscan.io/tx/0x";
-                    let tx = blockchainTX[0];
-                    var txdiv = document.getElementById("bloxTX");
-                    var linkTag = document.createElement('a');
-                    linkTag.setAttribute('href', link + tx["txid"]);
-                    linkTag.setAttribute('target', "_blanc");
-                    linkTag.innerHTML = "Check via " + tx["blockchain"] + "-" + tx["network_type"] + ": " + tx["network_info"];
-                    txdiv.appendChild(linkTag);
+                    for(var i = 0; i<blockchainTX.length; i++) {
+                        showBloxTXIcon(blockchainTX[i]);
+                    }
                 }
 
             }
             else {
-                document.getElementById("result_test").innerHTML = "Check failed!! Certificate doesn't contain seal!";
+                handleError(ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE, true);
             }
         }
     }
+    else {
+        handleError(ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE, true);
+    }
+}
+function showSeal() {
+    handleInfo(INFO.VERIFICATION_SUCCESSFUL, true);
+    var results_collection = document.getElementById("results_collection");
+    var imgTag = document.createElement('img');
+    imgTag.setAttribute('width', '50');
+    imgTag.setAttribute('height', '50');
+    imgTag.setAttribute('src', seal_icon_url);
+    imgTag.setAttribute('id', "seal_img");
+    results_collection.appendChild(imgTag);
+}
+function showBloxTXIcon(bloxTX) {
+    // TODO: dynamic blockchain check url -> check name and type of block chain tx
+    if (bloxTX && bloxTX.blockchain && bloxTX.network_type) {
+        let bloxTXData = blockchain_transid_check_url && blockchain_transid_check_url[bloxTX.blockchain] && blockchain_transid_check_url[bloxTX.blockchain][bloxTX.network_type];
+        if (bloxTXData !== undefined) {
+            var results_collection = document.getElementById("results_collection");
+            var linkTag = document.createElement('a');
+            // TODO: add tranId to url!!!!!!
+            linkTag.setAttribute('href', bloxTXData.url + "");
+            linkTag.setAttribute('title', bloxTXData.network_info);
+            linkTag.setAttribute('target', "_blanc");
+            // TODO: if icon url is given add img, otherwise add text
+            linkTag.innerHTML = bloxTXData.network_info;
+            results_collection.appendChild(linkTag);
+        }
+    }
+}
 
+function displayErrorStr(errorStr, clearInfo) {
+    document.getElementById("error_area").innerHTML = errorStr;
+    if (clearInfo !== undefined && clearInfo) {
+        clearTextContainer("info_area");
+    }
+}
+function displayInfoStr(infoStr, clearError) {
+    document.getElementById("info_area").innerHTML = infoStr;
+    if (clearError !== undefined && clearError) {
+        clearTextContainer("error_area");
+    }
+}
+function clearTextContainer(containerId) {
+    if (document.getElementById(containerId) && document.getElementById(containerId).innerHTML) {
+        document.getElementById(containerId).innerHTML = "";
+    }
 }
 
 /*

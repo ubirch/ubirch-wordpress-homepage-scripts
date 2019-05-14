@@ -57,3 +57,9 @@ button, input[type="button"], input[type="submit"] {
 .visible {
     visibility: visible;
 }
+#error-area {
+    color: #ff0000;
+}
+#info_area {
+    color: #333;
+}
