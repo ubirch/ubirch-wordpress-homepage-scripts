@@ -1,22 +1,35 @@
 <div class="container">
+  <h1>Scannen Sie Ihren persönlichen QR-Code ein, oder füllen Sie das Formular aus</h1>
   <h2>Ihre Informationen sind sicher in der Blockchain verankert. Finden Sie heraus, ob Ihre Parameter stimmen:</h2>
   <form name="gen_form" onsubmit="verify(); return false;">
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
     <table>
       <tbody>
       <tr>
         <td></td>
         <td>Name:</td>
-        <td><input type="text" name="name" id="name" disabled value="Max Mustermann"></td>
+        <td id="name">Max Mustermann</td>
       </tr>
       <tr>
         <td></td>
         <td>Datum:</td>
-        <td><input type="text" name="created"  id="created" disabled value="06.06.2060"></td>
+        <td id="created">06.06.2060</td>
       </tr>
       <tr>
         <td></td>
         <td>Workshop:</td>
-        <td><input type="text" name="workshop" id="workshop" disabled value="IoT und Blockchain"></td>
+        <td id="workshop">IoT und Blockchain</td>
       </tr>
       <tr>
         <td></td>
@@ -25,19 +38,17 @@
         <td></td>
         <td><input type="submit" value="verifizieren"></td>
         <td id="results_collection">
-          <span id="error_area"></span>
-          <span id="info_area"></span>
-          <span id="bloxTX"></span>
         </td>
       </tr>
       <tr>
         <td></td>
+        <td></td>
+        <td>
+          <span id="error_area"></span>
+          <span id="info_area"></span>
+        </td>
       </tr>
       </tbody>
     </table>
-
-    <textarea rows="4" cols="50" name="request_unhashed" id="request_unhashed"></textarea>
-    <textarea rows="4" cols="50" name="request_hashed" id="request_hashed"></textarea>
-
   </form>
 </div>

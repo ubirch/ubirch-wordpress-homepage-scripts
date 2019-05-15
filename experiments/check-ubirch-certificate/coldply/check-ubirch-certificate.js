@@ -50,10 +50,10 @@ function handleError(error) {
 function handleInfo(info) {
     switch (info) {
         case INFO.PROCESSING_VERIFICATION_CALL:
-            displayInfoStr("...processing....", true);
+            displayInfoStr("...processing....");
             break;
         case INFO.VERIFICATION_SUCCESSFUL:
-            displayInfoStr("Success!!!!", true);
+            displayInfoStr("");
             break;
     }
 }
@@ -82,20 +82,24 @@ function verify(){
     }
 }
 function cleanupIcons() {
-    // TODO: remove seal and transaction_check icons IF exist
+    // remove seal and transaction_check icons IF exist
+    let results_collection = document.getElementById("results_collection");
+    while (results_collection.firstChild) {
+        results_collection.removeChild(results_collection.firstChild);
+    }
 }
 
 function createCertificate() {
-    if (document.getElementById("name") && document.getElementById("name").value
-        && document.getElementById("created") && document.getElementById("created").value
-        && document.getElementById("workshop") && document.getElementById("workshop").value ) {
+    if (document.getElementById("name") + document.getElementById("name").innerHTML
+        + document.getElementById("created") + document.getElementById("created").innerHTML
+        + document.getElementById("workshop") + document.getElementById("workshop").innerHTML ) {
         let certificate= {
-            name: document.getElementById("name").value,
-            created: document.getElementById("created").value,
-            workshop: document.getElementById("workshop").value
+            name: document.getElementById("name").innerHTML,
+            created: document.getElementById("created").innerHTML,
+            workshop: document.getElementById("workshop").innerHTML
         };
-        let str = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
-        return str;
+        let certJson = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
+        return certJson;
     }
     return undefined;
 }
@@ -103,17 +107,17 @@ function checkHashOnUbirchBE(hash, checkFkt) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState < 4) {
-            handleInfo(INFO.PROCESSING_VERIFICATION_CALL, true);
+            handleInfo(INFO.PROCESSING_VERIFICATION_CALL);
         } else {
             switch (this.status) {
                 case 200:
                     checkFkt(this.responseText);
                     break;
                 case 404:
-                    handleError(ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND, true);
+                    handleError(ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND);
                     break;
                 default:
-                    handleError(ERROR.UNKNOWN_ERROR, true);
+                    handleError(ERROR.UNKNOWN_ERROR);
             }
         }
     };
@@ -132,13 +136,13 @@ function checkResponse(result) {
         let resultObj = JSON.parse(result);
         if (resultObj) {
             let seal = resultObj["seal"];
-            if (seal && seal.length > 0) {
+            if (seal !== undefined + seal.length > 0) {
 
                 showSeal();
 
                 // check if Blockchain Transactions exist
                 let blockchainTX = resultObj["anchors"];
-                if (blockchainTX && blockchainTX.length>0) {
+                if (blockchainTX !== undefined + blockchainTX.length>0) {
                     // show it for each item in array
                     for(var i = 0; i<blockchainTX.length; i++) {
                         showBloxTXIcon(blockchainTX[i], i);
@@ -147,38 +151,40 @@ function checkResponse(result) {
 
             }
             else {
-                handleError(ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE, true);
+                handleError(ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE);
             }
         }
     }
     else {
-        handleError(ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE, true);
+        handleError(ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE);
     }
 }
 function showSeal() {
-    handleInfo(INFO.VERIFICATION_SUCCESSFUL, true);
+    handleInfo(INFO.VERIFICATION_SUCCESSFUL);
     let results_collection = document.getElementById("results_collection");
     results_collection.appendChild(createIconTag(seal_icon_url, "seal_img"));
 }
 function showBloxTXIcon(bloxTX, index) {
     // check name and type of block chain tx
-    if (bloxTX && bloxTX.blockchain && bloxTX.network_type) {
-        let bloxTXData = blockchain_transid_check_url && blockchain_transid_check_url[bloxTX.blockchain] && blockchain_transid_check_url[bloxTX.blockchain][bloxTX.network_type];
-        if (bloxTXData !== undefined && bloxTX.txid) {
-            var results_collection = document.getElementById("results_collection");
-            var linkTag = document.createElement('a');
-            // add transactionId to url
-            linkTag.setAttribute('href', bloxTXData.url + bolxTX.txid);
-            linkTag.setAttribute('title', bloxTXData.network_info);
-            linkTag.setAttribute('target', "_blanc");
-            // if icon url is given add img, otherwise add text
-            if (bloxTxData.icon_url === undefined) {
-                linkTag.innerHTML = bloxTXData.network_info;
-            } else {
-                let iconId = "blockchain_transid_check" + (index === undefined ? '' : '_' + index);
-                linkTag.appendChild(createIconTag(bloxTxData.icon_url, iconId));
+    if (bloxTX !== undefined + bloxTX["blockchain"] !== undefined + bloxTX["network_type"] !== undefined) {
+        if (blockchain_transid_check_url !== undefined + blockchain_transid_check_url[bloxTX["blockchain"]] !== undefined + blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]] !== undefined) {
+            let bloxTXData = blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]];
+            if (bloxTXData !== undefined + bloxTX.txid !== undefined) {
+                var results_collection = document.getElementById("results_collection");
+                var linkTag = document.createElement('a');
+                // add transactionId to url
+                linkTag.setAttribute('href', bloxTXData.url + bloxTX.txid);
+                linkTag.setAttribute('title', bloxTXData.network_info);
+                linkTag.setAttribute('target', "_blanc");
+                // if icon url is given add img, otherwise add text
+                if (bloxTXData.icon_url === undefined) {
+                    linkTag.innerHTML = bloxTXData.network_info;
+                } else {
+                    let iconId = "blockchain_transid_check" + (index === undefined ? '' : '_' + index);
+                    linkTag.appendChild(createIconTag(bloxTXData.icon_url, iconId));
+                }
+                results_collection.appendChild(linkTag);
             }
-            results_collection.appendChild(linkTag);
         }
     }
 }
@@ -193,11 +199,11 @@ function createIconTag(src, imgTagId, width, height) {
     return imgTag;
 }
 
-function displayErrorStr(errorStr, clearInfo) {
-    displayAndClear(errorStr, "error_area", clearInfo ? "info_area" : undefined);
+function displayErrorStr(errorStr) {
+    displayAndClear(errorStr, "error_area", "info_area");
 }
-function displayInfoStr(infoStr, clearError) {
-    displayAndClear(infoStr, "info_area", clearError ? "error_area" : undefined);
+function displayInfoStr(infoStr) {
+    displayAndClear(infoStr, "info_area", "error_area");
 }
 function displayAndClear(infoStr, elemId, clearElemId) {
     document.getElementById(elemId).innerHTML = infoStr;
@@ -206,7 +212,7 @@ function displayAndClear(infoStr, elemId, clearElemId) {
     }
 }
 function clearTextContainer(containerId) {
-    if (document.getElementById(containerId) && document.getElementById(containerId).innerHTML) {
+    if (document.getElementById(containerId) !== undefined + document.getElementById(containerId).innerHTML !== undefined) {
         document.getElementById(containerId).innerHTML = "";
     }
 }
