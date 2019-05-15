@@ -171,15 +171,15 @@ function showBloxTXIcon(bloxTX, index) {
         var results_collection = document.getElementById("results_collection");
         var linkTag = document.createElement('a');
         // add transactionId to url
-        linkTag.setAttribute('href', bloxTXData.url + bolxTX.txid);
+        linkTag.setAttribute('href', bloxTXData.url + bloxTX.txid);
         linkTag.setAttribute('title', bloxTXData.network_info);
         linkTag.setAttribute('target', "_blanc");
         // if icon url is given add img, otherwise add text
-        if (bloxTxData.icon_url === undefined) {
+        if (bloxTXData.icon_url === undefined) {
           linkTag.innerHTML = bloxTXData.network_info;
         } else {
           let iconId = "blockchain_transid_check" + (index === undefined ? '' : '_' + index);
-          linkTag.appendChild(createIconTag(bloxTxData.icon_url, iconId));
+          linkTag.appendChild(createIconTag(bloxTXData.icon_url, iconId));
         }
         results_collection.appendChild(linkTag);
       }
