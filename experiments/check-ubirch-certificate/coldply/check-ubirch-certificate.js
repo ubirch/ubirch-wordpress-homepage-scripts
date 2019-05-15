@@ -158,14 +158,14 @@ function showSeal() {
     results_collection.appendChild(imgTag);
 }
 function showBloxTXIcon(bloxTX) {
-    // TODO: dynamic blockchain check url -> check name and type of block chain tx
+    // check name and type of block chain tx
     if (bloxTX && bloxTX.blockchain && bloxTX.network_type) {
         let bloxTXData = blockchain_transid_check_url && blockchain_transid_check_url[bloxTX.blockchain] && blockchain_transid_check_url[bloxTX.blockchain][bloxTX.network_type];
-        if (bloxTXData !== undefined) {
+        if (bloxTXData !== undefined && bloxTX.txid) {
             var results_collection = document.getElementById("results_collection");
             var linkTag = document.createElement('a');
-            // TODO: add tranId to url!!!!!!
-            linkTag.setAttribute('href', bloxTXData.url + "");
+            // add transactionId to url
+            linkTag.setAttribute('href', bloxTXData.url + bolxTX.txid);
             linkTag.setAttribute('title', bloxTXData.network_info);
             linkTag.setAttribute('target', "_blanc");
             // TODO: if icon url is given add img, otherwise add text
