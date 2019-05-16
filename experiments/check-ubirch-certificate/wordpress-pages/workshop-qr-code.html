@@ -5,21 +5,20 @@
 // set ubirch verify REST endpoint
 const verify_api_url = "https://verify.dev.ubirch.com/api/verify";
 // replace with url of seal icon
-const seal_icon_url = "/wp-content/uploads/workshop_images/Ubirch_verification_seal.png";
+const seal_icon_url = "/wp-content/uploads/workshop_images/ubirch_verify_right.png";
+const no_seal_icon_url = "/wp-content/uploads/workshop_images/ubirch_verify_wrong.png";
 // add blockchain test data as
-//  blockchain: { network_type: {network_info: "info string", url: "url with praefix"}}
+//  blockchain: { network_type: {url: "url, maybe with praefix of appended id", icon_url: "url of blockchain provider icon"}}
 const blockchain_transid_check_url = {
     ethereum: {
         testnet: {
-            network_info: "Rinkeby Testnet Network",
             url: "https://rinkeby.etherscan.io/tx/0x",
-            icon_url: "/wp-content/uploads/workshop_images/Ethereum_verification_seal.png"
+            icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
         }
     }
 };
 const INFO = {
-    PROCESSING_VERIFICATION_CALL: 1,
-    VERIFICATION_SUCCESSFUL: 2
+    PROCESSING_VERIFICATION_CALL: 1
 };
 const ERROR = {
     NO_ERROR: 0,
@@ -31,8 +30,10 @@ const ERROR = {
 };
 
 function handleError(error) {
+    let showNonSeal = true;
     switch (error) {
         case ERROR.NO_ERROR:
+            showNonSeal = false;
             break;
         case ERROR.CERTIFICATE_DATA_MISSING:
             displayErrorStr("Certificate data missing - please fill out form!!!");
@@ -48,19 +49,36 @@ function handleError(error) {
         default:
             displayErrorStr("Problem!!! No clue what really happened....!");
     }
+    if (showNonSeal) {
+        cleanupIcons();
+        showSeal(false);
+    }
 }
 function handleInfo(info) {
     switch (info) {
         case INFO.PROCESSING_VERIFICATION_CALL:
             displayInfoStr("...processing....");
             break;
-        case INFO.VERIFICATION_SUCCESSFUL:
-            displayInfoStr("");
-            break;
     }
 }
 
 //////   CODE  ////////
+
+if (window.location.search.length > 0) {
+  var allParams = window.location.search.substr(1).split('&').map(function (value) {
+    var data = value.split('=');
+    return {
+      param : data[0],
+      value : data[1]
+    }
+  });
+
+  var nameItem = allParams.filter(item => item.param === 'Name');
+  if (nameItem + document.getElementById("name")) {
+    document.getElementById("name").value = nameItem[0].value;
+  }
+
+}
 
 function verify(){
 
@@ -70,15 +88,11 @@ function verify(){
     if (!cert) {
         handleError(ERROR.CERTIFICATE_DATA_MISSING);
     } else {
-        // TODO: remove debug statement
-        console.log(cert);
-
         // hash certificate object
         let transIdAB = sha512.arrayBuffer(cert);
         let transId = btoa(
             new Uint8Array(transIdAB)
                 .reduce((data, byte) => data + String.fromCharCode(byte), ''));
-        console.log(transId);
 
         checkHashOnUbirchBE(transId, checkResponse);
     }
@@ -92,13 +106,13 @@ function cleanupIcons() {
 }
 
 function createCertificate() {
-    if (document.getElementById("name") + document.getElementById("name").innerHTML
-        + document.getElementById("created") + document.getElementById("created").innerHTML
-        + document.getElementById("workshop") + document.getElementById("workshop").innerHTML ) {
+    if (document.getElementById("name") + document.getElementById("name").value
+        + document.getElementById("created") + document.getElementById("created").value
+        + document.getElementById("workshop") + document.getElementById("workshop").value ) {
         let certificate= {
-            name: document.getElementById("name").innerHTML,
-            created: document.getElementById("created").innerHTML,
-            workshop: document.getElementById("workshop").innerHTML
+            name: document.getElementById("name").value,
+            created: document.getElementById("created").value,
+            workshop: document.getElementById("workshop").value
         };
         let certJson = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
         return certJson;
@@ -130,6 +144,9 @@ function checkHashOnUbirchBE(hash, checkFkt) {
 }
 
 function checkResponse(result) {
+
+    cleanupIcons();
+
     // Success IF
     // 1. HTTP Status 200 -> if this fkt is called and result isn't empty
     // 2. Key Seal != ''
@@ -140,7 +157,7 @@ function checkResponse(result) {
             let seal = resultObj["seal"];
             if (seal !== undefined + seal.length > 0) {
 
-                showSeal();
+                showSeal(true);
 
                 // check if Blockchain Transactions exist
                 let blockchainTX = resultObj["anchors"];
@@ -161,10 +178,13 @@ function checkResponse(result) {
         handleError(ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE);
     }
 }
-function showSeal() {
-    handleInfo(INFO.VERIFICATION_SUCCESSFUL);
+function showSeal(successful) {
     let results_collection = document.getElementById("results_collection");
-    results_collection.appendChild(createIconTag(seal_icon_url, "seal_img"));
+    if (successful) {
+        results_collection.appendChild(createIconTag(seal_icon_url, "seal_img"));
+    } else {
+        results_collection.appendChild(createIconTag(no_seal_icon_url, "no_seal_img"));
+    }
 }
 function showBloxTXIcon(bloxTX, index) {
     // check name and type of block chain tx
@@ -176,11 +196,12 @@ function showBloxTXIcon(bloxTX, index) {
                 var linkTag = document.createElement('a');
                 // add transactionId to url
                 linkTag.setAttribute('href', bloxTXData.url + bloxTX.txid);
-                linkTag.setAttribute('title', bloxTXData.network_info);
+                let titleStr = bloxTX.network_info ? bloxTX.network_info : bloxTX["blockchain"];
+                linkTag.setAttribute('title', titleStr);
                 linkTag.setAttribute('target', "_blanc");
                 // if icon url is given add img, otherwise add text
                 if (bloxTXData.icon_url === undefined) {
-                    linkTag.innerHTML = bloxTXData.network_info;
+                    linkTag.innerHTML = titleStr;
                 } else {
                     let iconId = "blockchain_transid_check" + (index === undefined ? '' : '_' + index);
                     linkTag.appendChild(createIconTag(bloxTXData.icon_url, iconId));
@@ -204,22 +225,12 @@ function createIconTag(src, imgTagId, width, height) {
 }
 
 function displayErrorStr(errorStr) {
-    displayAndClear(errorStr, "error_area", "info_area");
+    console.log(errorStr);
 }
 function displayInfoStr(infoStr) {
-    displayAndClear(infoStr, "info_area", "error_area");
+    document.getElementById("results_collection").innerHTML = infoStr;
 }
-function displayAndClear(infoStr, elemId, clearElemId) {
-    document.getElementById(elemId).innerHTML = infoStr;
-    if (clearElemId !== undefined) {
-        clearTextContainer(clearElemId);
-    }
-}
-function clearTextContainer(containerId) {
-    if (document.getElementById(containerId) !== undefined + document.getElementById(containerId).innerHTML !== undefined) {
-        document.getElementById(containerId).innerHTML = "";
-    }
-}
+
 </script></pre>
 <h1>Scannen Sie Ihren persönlichen QR-Code ein, oder füllen Sie das Formular aus</h1>
 <h2>Ihre Informationen sind sicher in der Blockchain verankert. Finden Sie heraus, ob Ihre Parameter stimmen:</h2>
@@ -241,17 +252,17 @@ function clearTextContainer(containerId) {
     <tr>
       <td></td>
       <td>Name:</td>
-      <td id="name">[display-get-param name="Name"]</td>
+      <td><input type="text" name="name" id="name" disabled value=""></td>
     </tr>
     <tr>
       <td></td>
       <td>Datum:</td>
-      <td id="created">[display-get-param name="Datum"]</td>
+      <td><input type="text" id="created" disabled value=[display-get-param name="Datum"]></td>
     </tr>
     <tr>
       <td></td>
       <td>Workshop:</td>
-      <td id="workshop">[display-get-param name="Workshop"]</td>
+      <td><input type="text" id="workshop" disabled value=[display-get-param name="Workshop"]></td>
     </tr>
     <tr>
       <td></td>
@@ -264,11 +275,6 @@ function clearTextContainer(containerId) {
     </tr>
     <tr>
         <td></td>
-        <td></td>
-        <td>
-            <span id="error_area"></span>
-            <span id="info_area"></span>
-        </td>
     </tr>
     </tbody>
   </table>
