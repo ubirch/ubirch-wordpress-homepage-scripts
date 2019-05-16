@@ -64,22 +64,6 @@ function handleInfo(info) {
 
 //////   CODE  ////////
 
-if (window.location.search.length > 0) {
-  var allParams = window.location.search.substr(1).split('&').map(function (value) {
-    var data = value.split('=');
-    return {
-      param : data[0],
-      value : data[1]
-    }
-  });
-
-  var nameItem = allParams.filter(item => item.param === 'Name');
-  if (nameItem + document.getElementById("name")) {
-    document.getElementById("name").value = nameItem[0].value;
-  }
-
-}
-
 function verify(){
 
     cleanupIcons();
@@ -106,13 +90,13 @@ function cleanupIcons() {
 }
 
 function createCertificate() {
-    if (document.getElementById("name") + document.getElementById("name").value
-        + document.getElementById("created") + document.getElementById("created").value
-        + document.getElementById("workshop") + document.getElementById("workshop").value ) {
+    if (document.getElementById("name") + document.getElementById("name").innerHTML
+        + document.getElementById("created") + document.getElementById("created").innerHTML
+        + document.getElementById("workshop") + document.getElementById("workshop").innerHTML ) {
         let certificate= {
-            name: document.getElementById("name").value,
-            created: document.getElementById("created").value,
-            workshop: document.getElementById("workshop").value
+            name: document.getElementById("name").innerHTML,
+            created: document.getElementById("created").innerHTML,
+            workshop: document.getElementById("workshop").innerHTML
         };
         let certJson = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
         return certJson;
@@ -252,17 +236,17 @@ function displayInfoStr(infoStr) {
     <tr>
       <td></td>
       <td>Name:</td>
-      <td><input type="text" name="name" id="name" disabled value=""></td>
+      <td id="name">[display-get-param name="Name"]</td>
     </tr>
     <tr>
       <td></td>
       <td>Datum:</td>
-      <td><input type="text" id="created" disabled value=[display-get-param name="Datum"]></td>
+      <td id="created">[display-get-param name="Datum"]</td>
     </tr>
     <tr>
       <td></td>
       <td>Workshop:</td>
-      <td><input type="text" id="workshop" disabled value=[display-get-param name="Workshop"]></td>
+      <td id="workshop">[display-get-param name="Workshop"]</td>
     </tr>
     <tr>
       <td></td>
