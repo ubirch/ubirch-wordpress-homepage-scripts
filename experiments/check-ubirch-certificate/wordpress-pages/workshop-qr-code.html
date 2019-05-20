@@ -10,12 +10,26 @@ const no_seal_icon_url = "/wp-content/uploads/workshop_images/ubirch_verify_wron
 // add blockchain test data as
 //  blockchain: { network_type: {url: "url, maybe with praefix of appended id", icon_url: "url of blockchain provider icon"}}
 const blockchain_transid_check_url = {
-    ethereum: {
-        testnet: {
-            url: "https://rinkeby.etherscan.io/tx/0x",
-            icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
-        }
+  ethereum: {
+    testnet: {
+      url: "https://rinkeby.etherscan.io/tx/0x",
+      icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
+    },
+    mainnet: {
+      url: undefined, // TODO: add url
+      icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
     }
+  },
+  iota: {
+    testnet: {
+      url: undefined, // TODO: add url
+      icon_url: "/wp-content/uploads/workshop_images/IOTA_verify_right.png"
+    },
+    mainnet: {
+      url: undefined, // TODO: add url
+      icon_url: "/wp-content/uploads/workshop_images/IOTA_verify_right.png"
+    }
+  }
 };
 const INFO = {
     PROCESSING_VERIFICATION_CALL: 1
@@ -94,9 +108,9 @@ function createCertificate() {
         + document.getElementById("created") + document.getElementById("created").innerHTML
         + document.getElementById("workshop") + document.getElementById("workshop").innerHTML ) {
         let certificate= {
-            name: document.getElementById("name").innerHTML,
-            created: document.getElementById("created").innerHTML,
-            workshop: document.getElementById("workshop").innerHTML
+            name: getInputStr("name"),
+            created: getInputStr("created"),
+            workshop: getInputStr("workshop")
         };
         let certJson = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
         return certJson;
@@ -179,7 +193,8 @@ function showBloxTXIcon(bloxTX, index) {
                 var results_collection = document.getElementById("results_collection");
                 var linkTag = document.createElement('a');
                 // add transactionId to url
-                linkTag.setAttribute('href', bloxTXData.url + bloxTX.txid);
+                if (bloxTXData.url)
+                  linkTag.setAttribute('href', bloxTXData.url + bloxTX.txid);
                 let titleStr = bloxTX.network_info ? bloxTX.network_info : bloxTX["blockchain"];
                 linkTag.setAttribute('title', titleStr);
                 linkTag.setAttribute('target', "_blanc");
@@ -206,6 +221,15 @@ function createIconTag(src, imgTagId, width, height) {
         imgTag.setAttribute('id', imgTagId);
     }
     return imgTag;
+}
+
+function getInputStr(inputId) {
+  if (document.getElementById(inputId) + document.getElementById(inputId).innerHTML) {
+    var doc = new DOMParser().parseFromString(document.getElementById(inputId).innerHTML, "text/html");
+    return doc.documentElement.textContent;
+  } else {
+    return "";
+  }
 }
 
 function displayErrorStr(errorStr) {
