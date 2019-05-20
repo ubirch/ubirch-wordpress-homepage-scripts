@@ -78,6 +78,27 @@ function handleInfo(info) {
 
 //////   CODE  ////////
 
+jQuery(initializeInputFields);
+
+function initializeInputFields() {
+  if (window.location.search.length > 0) {
+    var allParams = window.location.search.substr(1).split('&').map(function (value) {
+      var data = value.split('=');
+      return {
+        key : data[0],
+        value : decodeURI(data[1])
+      }
+    });
+
+    allParams.forEach(param => {
+      if (param.key + document.getElementById(param.key)) {
+        document.getElementById(param.key).value = param.value;
+      }
+    });
+  }
+  console.log("Initialized!");
+}
+
 function verify(){
 
     cleanupIcons();
@@ -104,13 +125,13 @@ function cleanupIcons() {
 }
 
 function createCertificate() {
-    if (document.getElementById("name") + document.getElementById("name").innerHTML
-        + document.getElementById("created") + document.getElementById("created").innerHTML
-        + document.getElementById("workshop") + document.getElementById("workshop").innerHTML ) {
+    if (document.getElementById("Name") + document.getElementById("Name").value
+        + document.getElementById("Datum") + document.getElementById("Datum").value
+        + document.getElementById("Workshop") + document.getElementById("Workshop").value ) {
         let certificate= {
-            name: getInputStr("name"),
-            created: getInputStr("created"),
-            workshop: getInputStr("workshop")
+            name: getInputStr("Name"),
+            created: getInputStr("Datum"),
+            workshop: getInputStr("Workshop")
         };
         let certJson = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
         return certJson;
@@ -224,8 +245,8 @@ function createIconTag(src, imgTagId, width, height) {
 }
 
 function getInputStr(inputId) {
-  if (document.getElementById(inputId) + document.getElementById(inputId).innerHTML) {
-    var doc = new DOMParser().parseFromString(document.getElementById(inputId).innerHTML, "text/html");
+  if (document.getElementById(inputId) + document.getElementById(inputId).value) {
+    var doc = new DOMParser().parseFromString(document.getElementById(inputId).value, "text/html");
     return doc.documentElement.textContent;
   } else {
     return "";
@@ -260,17 +281,17 @@ function displayInfoStr(infoStr) {
     <tr>
       <td></td>
       <td>Name:</td>
-      <td id="name">[display-get-param name="Name"]</td>
+      <td><input type="text" id="Name"></td>
     </tr>
     <tr>
       <td></td>
       <td>Datum:</td>
-      <td id="created">[display-get-param name="Datum"]</td>
+      <td><input type="text" id="Datum"></td>
     </tr>
     <tr>
       <td></td>
       <td>Workshop:</td>
-      <td id="workshop">[display-get-param name="Workshop"]</td>
+      <td><input type="text" id="Workshop"></td>
     </tr>
     <tr>
       <td></td>
