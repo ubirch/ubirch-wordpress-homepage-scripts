@@ -86,7 +86,7 @@ function initializeInputFields() {
       var data = value.split('=');
       return {
         key : data[0],
-        value : decodeURI(data[1])
+        value : decodeURIComponent(data[1])
       }
     });
 
