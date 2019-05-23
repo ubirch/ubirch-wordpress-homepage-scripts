@@ -1,4 +1,21 @@
 <pre style="display: none;"><script type="text/javascript" src="/wp-content/myscript/js_sha512.js"></script></pre>
+<pre style="display: none;">
+  <style>
+    .info_success {
+      color: #53af32;
+    }
+    .info_fail {
+      color: #e40146;
+    }
+    .headline {
+      font-weight: 700;
+      font-size: 1.05em;
+    }
+    tr.space_up td {
+      padding-top: 30px;
+    }
+  </style>
+</pre>
 <pre style="display: none;"><script>
 //////   SETTINGS  ////////
 
@@ -32,7 +49,8 @@ const blockchain_transid_check_url = {
   }
 };
 const INFO = {
-  PROCESSING_VERIFICATION_CALL: 1
+  PROCESSING_VERIFICATION_CALL: 1,
+  VERIFICATION_SUCCESSFUL: 2
 };
 const ERROR = {
   NO_ERROR: 0,
@@ -40,38 +58,63 @@ const ERROR = {
   CERTIFICATE_ID_CANNOT_BE_FOUND: 2,
   VERIFICATION_FAILED_EMPTY_RESPONSE: 3,
   VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE: 4,
+  VERIFICATION_FAILED: 5,
   UNKNOWN_ERROR: 99
+};
+const INFO_TEXTS = {
+  PENDING: {
+    info: "...Verifikation wird durchgeführt...."
+  },
+  SUCCESS: {
+    headline: "Verifikation erfolgreich!",
+    info: "Für zusätzliche Informationen zur Verankerung klicken Sie auf das Icon der jeweiligen Blockchain:"
+  },
+  FAIL: {
+    headline: "Verifikation fehlgeschlagen!",
+    info: "Zu den eingegebenen Daten gibt es keine Blockchain-Verankerung"
+  }
 };
 
 function handleError(error) {
   let showNonSeal = true;
+  let displayErrorStr;
   switch (error) {
     case ERROR.NO_ERROR:
       showNonSeal = false;
       break;
     case ERROR.CERTIFICATE_DATA_MISSING:
-      displayErrorStr("Certificate data missing - please fill out form!!!");
+      displayErrorStr = "Zertifikatsdaten fehlen - bitte füllen Sie das Formular aus oder scannen Sie Ihren QR-Code!!!";
       break;
+    case INFO.VERIFICATION_FAILED:
+      displayErrorStr = "Verifikation fehlgeschlagen!";
     case ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND:
-      displayErrorStr("Certificate cannot be found!!!!!");
+      displayErrorStr = "Zertifikat konnte nicht gefunden werden!!!!!";
       break;
     case ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE:
     case ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE:
-      displayErrorStr("Check failed!! Certificat is emptyore doesn't contain seal");
+      displayErrorStr = "Verifikation fehlgeschlagen!! Zertifikat ist leer ider enthält kein Siegel";
       break;
     case ERROR.UNKNOWN_ERROR:
     default:
-      displayErrorStr("Problem!!! No clue what really happened....!");
+      displayErrorStr = "Problem!!! Ein unerwarteter Fehler ist aufgetreten....!";
   }
+  logError(displayErrorStr);
   if (showNonSeal) {
     cleanupIcons();
     showSeal(false);
+    addHeadlineAndInfotext(false);
   }
 }
 function handleInfo(info) {
+  cleanupIcons();
+
   switch (info) {
     case INFO.PROCESSING_VERIFICATION_CALL:
-      displayInfoStr("...processing....");
+      addHeadlineAndInfotext(undefined);
+      break;
+    case INFO.VERIFICATION_SUCCESSFUL:
+      showSeal(true);
+      addHeadlineAndInfotext(true);
       break;
   }
 }
@@ -118,10 +161,17 @@ function verify(){
 }
 function cleanupIcons() {
   // remove seal and transaction_check icons IF exist
-  let results_collection = document.getElementById("results_collection");
-  while (results_collection.firstChild) {
-    results_collection.removeChild(results_collection.firstChild);
-  }
+  cleanAllChilds("results_collection");
+  cleanAllChilds("seal_result");
+  cleanAllChilds("seal_info_text");
+}
+
+function cleanAllChilds(elemId) {
+  let results_collection = document.getElementById(elemId);
+  if (results_collection)
+    while (results_collection.firstChild) {
+      results_collection.removeChild(results_collection.firstChild);
+    }
 }
 
 function createCertificate() {
@@ -176,11 +226,18 @@ function checkResponse(result) {
       let seal = resultObj["seal"];
       if (seal !== undefined + seal.length > 0) {
 
-        showSeal(true);
+        handleInfo(INFO.VERIFICATION_SUCCESSFUL);
 
         // check if Blockchain Transactions exist
         let blockchainTX = resultObj["anchors"];
         if (blockchainTX !== undefined + blockchainTX.length>0) {
+
+          // add info text that blockchain icons are clickable
+          let results_collection = document.getElementById("results_collection");
+          results_collection.appendChild(document.createElement('br'));
+          results_collection.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.info, "info_success"));
+          results_collection.appendChild(document.createElement('br'));
+
           // show it for each item in array
           for(var i = 0; i<blockchainTX.length; i++) {
             showBloxTXIcon(blockchainTX[i], i);
@@ -198,13 +255,29 @@ function checkResponse(result) {
   }
 }
 function showSeal(successful) {
-  let results_collection = document.getElementById("results_collection");
+  let results_collection = document.getElementById("seal_result");
   if (successful) {
     results_collection.appendChild(createIconTag(seal_icon_url, "seal_img"));
   } else {
     results_collection.appendChild(createIconTag(no_seal_icon_url, "no_seal_img"));
   }
 }
+
+function addHeadlineAndInfotext(successful) {
+  let seal_info_text = document.getElementById("seal_info_text");
+  let results_collection = document.getElementById("results_collection");
+  if (successful === undefined) {
+    results_collection.appendChild(createTxtTag(INFO_TEXTS.PENDING.info, ""));
+  } else {
+    if (successful) {
+      seal_info_text.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.headline, "info_success headline"));
+    } else {
+      seal_info_text.appendChild(createTxtTag(INFO_TEXTS.FAIL.headline, "info_fail headline"));
+      results_collection.appendChild(createTxtTag(INFO_TEXTS.FAIL.info, "info_fail"));
+    }
+  }
+}
+
 function showBloxTXIcon(bloxTX, index) {
   // check name and type of block chain tx
   if (bloxTX !== undefined + bloxTX["blockchain"] !== undefined + bloxTX["network_type"] !== undefined) {
@@ -212,6 +285,7 @@ function showBloxTXIcon(bloxTX, index) {
       let bloxTXData = blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]];
       if (bloxTXData !== undefined + bloxTX.txid !== undefined) {
         var results_collection = document.getElementById("results_collection");
+
         var linkTag = document.createElement('a');
         // add transactionId to url
         if (bloxTXData.url)
@@ -244,6 +318,13 @@ function createIconTag(src, imgTagId, width, height) {
   return imgTag;
 }
 
+function createTxtTag(txt, className) {
+  let txtTag = document.createElement('div');
+  txtTag.innerHTML = txt;
+  txtTag.setAttribute('class', className);
+  return txtTag;
+}
+
 function getInputStr(inputId) {
   if (document.getElementById(inputId) + document.getElementById(inputId).value) {
     var doc = new DOMParser().parseFromString(document.getElementById(inputId).value, "text/html");
@@ -253,16 +334,17 @@ function getInputStr(inputId) {
   }
 }
 
-function displayErrorStr(errorStr) {
+function logError(errorStr) {
   console.log(errorStr);
 }
-function displayInfoStr(infoStr) {
+function displayInfoStr(infoHeadline, infoStr, color) {
+
   document.getElementById("results_collection").innerHTML = infoStr;
 }
 
 </script></pre>
-<h1>Scannen Sie Ihren persönlichen QR-Code ein, oder füllen Sie das Formular aus</h1>
-<h2>Ihre Informationen sind sicher in der Blockchain verankert. Finden Sie heraus, ob Ihre Parameter stimmen:</h2>
+<h1>Ihre Workshop-Teilnahme ist sicher in der Blockchain verankert!</h1>
+<h2>Zur Verifikation scannen Sie Ihren persönlichen QR-Code oder füllen Sie das Formular aus:</h2>
 <form name="gen_form" onsubmit="verify(); return false;">
   <p></p>
   <p></p>
@@ -280,26 +362,32 @@ function displayInfoStr(infoStr) {
     <tbody>
     <tr>
       <td></td>
-      <td>Name:</td>
+      <td colspan="2"><label for="Name">Vor- und Nachname:</label></td>
       <td><input type="text" id="Name"></td>
     </tr>
     <tr>
       <td></td>
-      <td>Datum:</td>
-      <td><input type="text" id="Datum"></td>
+      <td colspan="2"><label for="Datum">Datum des Workshops:</label></td>
+      <td><input type="text" id="Datum" placeholder="tt.mm.jjjj"></td>
     </tr>
     <tr>
       <td></td>
-      <td>Workshop:</td>
+      <td colspan="2"><label for="Workshop">Titel des Workshops:</label></td>
       <td><input type="text" id="Workshop"></td>
     </tr>
-    <tr>
+    <tr class="space_up">
       <td></td>
+      <td colspan="2" id="seal_info_text"></td>
+      <td id="seal_result"></td>
     </tr>
     <tr>
       <td></td>
-      <td><input type="submit" value="verifizieren"></td>
-      <td id="results_collection">
+      <td colspan="3" id="results_collection"></td>
+    </tr>
+    <tr class="space_up">
+      <td></td>
+      <td colspan="2"><input type="submit" value="verifizieren"></td>
+      <td>
       </td>
     </tr>
     <tr>

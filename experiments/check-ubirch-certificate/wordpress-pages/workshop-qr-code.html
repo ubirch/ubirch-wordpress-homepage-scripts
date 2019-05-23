@@ -2,18 +2,19 @@
 <pre style="display: none;">
   <style>
     .info_success {
-      color: green;
+      color: #53af32;
     }
     .info_fail {
-      color: red;
+      color: #e40146;
     }
     .headline {
       font-weight: 700;
-      font-size: 1.1em;
-      padding: 15px;
-      float: right;
+      font-size: 1.05em;
     }
-</style>
+    tr.space_up td {
+      padding-top: 30px;
+    }
+  </style>
 </pre>
 <pre style="display: none;"><script>
 //////   SETTINGS  ////////
@@ -61,6 +62,9 @@ const ERROR = {
   UNKNOWN_ERROR: 99
 };
 const INFO_TEXTS = {
+  PENDING: {
+    info: "...Verifikation wird durchgeführt...."
+  },
   SUCCESS: {
     headline: "Verifikation erfolgreich!",
     info: "Für zusätzliche Informationen zur Verankerung klicken Sie auf das Icon der jeweiligen Blockchain:"
@@ -102,12 +106,16 @@ function handleError(error) {
   }
 }
 function handleInfo(info) {
+  cleanupIcons();
+
   switch (info) {
     case INFO.PROCESSING_VERIFICATION_CALL:
-      displayInfoStr(null, "...Verifikation wird durchgeführt....");
+      addHeadlineAndInfotext(undefined);
       break;
     case INFO.VERIFICATION_SUCCESSFUL:
-      return "Verifikation erfolgreich!";
+        showSeal(true);
+        addHeadlineAndInfotext(true);
+      break;
   }
 }
 
@@ -153,10 +161,17 @@ function verify(){
 }
 function cleanupIcons() {
   // remove seal and transaction_check icons IF exist
-  let results_collection = document.getElementById("results_collection");
-  while (results_collection.firstChild) {
-    results_collection.removeChild(results_collection.firstChild);
-  }
+  cleanAllChilds("results_collection");
+  cleanAllChilds("seal_result");
+  cleanAllChilds("seal_info_text");
+}
+
+function cleanAllChilds(elemId) {
+  let results_collection = document.getElementById(elemId);
+  if (results_collection)
+    while (results_collection.firstChild) {
+      results_collection.removeChild(results_collection.firstChild);
+    }
 }
 
 function createCertificate() {
@@ -216,6 +231,13 @@ function checkResponse(result) {
         // check if Blockchain Transactions exist
         let blockchainTX = resultObj["anchors"];
         if (blockchainTX !== undefined + blockchainTX.length>0) {
+
+          // add info text that blockchain icons are clickable
+          let results_collection = document.getElementById("results_collection");
+          results_collection.appendChild(document.createElement('br'));
+          results_collection.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.info, "info_success"));
+          results_collection.appendChild(document.createElement('br'));
+
           // show it for each item in array
           for(var i = 0; i<blockchainTX.length; i++) {
             showBloxTXIcon(blockchainTX[i], i);
@@ -233,7 +255,7 @@ function checkResponse(result) {
   }
 }
 function showSeal(successful) {
-  let results_collection = document.getElementById("results_collection");
+  let results_collection = document.getElementById("seal_result");
   if (successful) {
     results_collection.appendChild(createIconTag(seal_icon_url, "seal_img"));
   } else {
@@ -242,13 +264,17 @@ function showSeal(successful) {
 }
 
 function addHeadlineAndInfotext(successful) {
+  let seal_info_text = document.getElementById("seal_info_text");
   let results_collection = document.getElementById("results_collection");
-  if (successful) {
-    results_collection.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.headline, "info_success headline"));
+  if (successful === undefined) {
+    results_collection.appendChild(createTxtTag(INFO_TEXTS.PENDING.info, ""));
   } else {
-    results_collection.appendChild(createTxtTag(INFO_TEXTS.FAIL.headline, "info_fail headline"));
-    results_collection.appendChild(document.createElement('br'));
-    results_collection.appendChild(createTxtTag(INFO_TEXTS.FAIL.info, "info_fail"));
+    if (successful) {
+      seal_info_text.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.headline, "info_success headline"));
+    } else {
+      seal_info_text.appendChild(createTxtTag(INFO_TEXTS.FAIL.headline, "info_fail headline"));
+      results_collection.appendChild(createTxtTag(INFO_TEXTS.FAIL.info, "info_fail"));
+    }
   }
 }
 
@@ -259,6 +285,7 @@ function showBloxTXIcon(bloxTX, index) {
       let bloxTXData = blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]];
       if (bloxTXData !== undefined + bloxTX.txid !== undefined) {
         var results_collection = document.getElementById("results_collection");
+
         var linkTag = document.createElement('a');
         // add transactionId to url
         if (bloxTXData.url)
@@ -317,7 +344,7 @@ function displayInfoStr(infoHeadline, infoStr, color) {
 
 </script></pre>
 <h1>Ihre Workshop-Teilnahme ist sicher in der Blockchain verankert!</h1>
-<h2>Zur Verifikation scannen Sie Ihnren persönlichen QR-Code oder füllen Sie das Formular aus:</h2>
+<h2>Zur Verifikation scannen Sie Ihren persönlichen QR-Code oder füllen Sie das Formular aus:</h2>
 <form name="gen_form" onsubmit="verify(); return false;">
   <p></p>
   <p></p>
@@ -348,11 +375,16 @@ function displayInfoStr(infoHeadline, infoStr, color) {
       <td colspan="2"><label for="Workshop">Titel des Workshops:</label></td>
       <td><input type="text" id="Workshop"></td>
     </tr>
-    <tr>
-      <td colspan="4" id="results_collection">
-      </td>
+    <tr class="space_up">
+      <td></td>
+      <td colspan="2" id="seal_info_text"></td>
+      <td id="seal_result"></td>
     </tr>
     <tr>
+      <td></td>
+      <td colspan="3" id="results_collection"></td>
+    </tr>
+    <tr class="space_up">
       <td></td>
       <td colspan="2"><input type="submit" value="verifizieren"></td>
       <td>
