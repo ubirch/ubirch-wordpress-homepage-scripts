@@ -27,6 +27,16 @@ const no_seal_icon_url = "/wp-content/uploads/workshop_images/ubirch_verify_wron
 // add blockchain test data as
 //  blockchain: { network_type: {url: "url, maybe with praefix of appended id", icon_url: "url of blockchain provider icon"}}
 const blockchain_transid_check_url = {
+  "ethereum-classic": {
+    testnet: {
+      url: "https://kottiexplorer.ethernode.io/search?q=0x",
+      icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
+    },
+    mainnet: {
+      url: "https://gastracker.io/search?q=0x",
+      icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
+    }
+  },
   ethereum: {
     testnet: {
       url: "https://rinkeby.etherscan.io/tx/0x",
