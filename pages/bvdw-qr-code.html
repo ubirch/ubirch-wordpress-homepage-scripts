@@ -1,6 +1,5 @@
 <pre style="display: none;"><script type="text/javascript" src="/wp-content/myscript/js_sha512.js"></script></pre>
-<pre style="display: none;">
-  <style>
+<pre style="display: none;">  <style>
     .info_success {
       color: #53af32;
     }
@@ -189,16 +188,16 @@ function createCertificate() {
           + document.getElementById("bereich") + document.getElementById("bereich").value
           + document.getElementById("von") + document.getElementById("von").value
           + document.getElementById("bis") + document.getElementById("bis").value ) {
-  let certificate= {
-    Unternehmen: getInputStr("unternehmen"),
-    Zertifikat: getInputStr("bereich"),
-    Zulassungsdatum: getInputStr("von"),
-    Ablaufdatum: getInputStr("bis")
-  };
-  let certJson = "{\"created\":\""+certificate.created+"\",\"name\":\""+certificate.name+"\",\"workshop\":\""+certificate.workshop+"\"}";
-  return certJson;
-}
-return undefined;
+    let certificate= {
+      company: getInputStr("unternehmen"),
+      realm: getInputStr("bereich"),
+      from: getInputStr("von"),
+      until: getInputStr("bis")
+    };
+    let certJson = "{\"company\":\""+certificate.company+"\",\"from\":\""+certificate.from+"\",\"until\":\""+certificate.until+"\",\"realm\":\""+certificate.realm+"\"}";
+    return certJson;
+  }
+  return undefined;
 }
 function checkHashOnUbirchBE(hash, checkFkt) {
   var xhttp = new XMLHttpRequest();
