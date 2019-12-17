@@ -19,113 +19,113 @@
 //////   SETTINGS  ////////
 
 // set ubirch verify REST endpoint
-const verify_api_url = "https://verify.prod.ubirch.com/api/verify";
+const verify_api_url = "https://verify.prod.ubirch.com/api/upp/verify/anchor?blockchain_info=ext";
 // replace with url of seal icon
 const seal_icon_url = "/wp-content/uploads/workshop_images/ubirch_verify_right.png";
 const no_seal_icon_url = "/wp-content/uploads/workshop_images/ubirch_verify_wrong.png";
 // add blockchain test data as
 //  blockchain: { network_type: {url: "url, maybe with praefix of appended id", icon_url: "url of blockchain provider icon"}}
 const blockchain_transid_check_url = {
-  "ethereum-classic": {
-    testnet: {
-      url: "https://kottiexplorer.ethernode.io/search?q=0x",
-      icon_url: "/wp-content/uploads/2019/08/Ethereum-Classic_verify_right.png"
+    "ethereum-classic": {
+        testnet: {
+            url: "https://kottiexplorer.ethernode.io/search?q=0x",
+            icon_url: "/wp-content/uploads/2019/08/Ethereum-Classic_verify_right.png"
+        },
+        mainnet: {
+            url: "https://gastracker.io/search?q=0x",
+            icon_url: "/wp-content/uploads/2019/08/Ethereum-Classic_verify_right.png"
+        }
     },
-    mainnet: {
-      url: "https://gastracker.io/search?q=0x",
-      icon_url: "/wp-content/uploads/2019/08/Ethereum-Classic_verify_right.png"
-    }
-  },
-  ethereum: {
-    testnet: {
-      url: "https://rinkeby.etherscan.io/tx/0x",
-      icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
+    ethereum: {
+        testnet: {
+            url: "https://rinkeby.etherscan.io/tx/0x",
+            icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
+        },
+        mainnet: {
+            url: "https://etherscan.io/tx/0x",
+            icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
+        }
     },
-    mainnet: {
-      url: "https://etherscan.io/tx/0x",
-      icon_url: "/wp-content/uploads/workshop_images/Ethereum_verify_right.png"
+    iota: {
+        testnet: {
+            url: "https://devnet.thetangle.org/transaction/",
+            icon_url: "/wp-content/uploads/workshop_images/IOTA_verify_right.png"
+        },
+        mainnet: {
+            url: "https://thetangle.org/transaction/",
+            icon_url: "/wp-content/uploads/workshop_images/IOTA_verify_right.png"
+        }
     }
-  },
-  iota: {
-    testnet: {
-      url: "https://devnet.thetangle.org/transaction/",
-      icon_url: "/wp-content/uploads/workshop_images/IOTA_verify_right.png"
-    },
-    mainnet: {
-      url: "https://thetangle.org/transaction/",
-      icon_url: "/wp-content/uploads/workshop_images/IOTA_verify_right.png"
-    }
-  }
 };
 const INFO = {
-  PROCESSING_VERIFICATION_CALL: 1,
-  VERIFICATION_SUCCESSFUL: 2
+    PROCESSING_VERIFICATION_CALL: 1,
+    VERIFICATION_SUCCESSFUL: 2
 };
 const ERROR = {
-  NO_ERROR: 0,
-  CERTIFICATE_DATA_MISSING: 1,
-  CERTIFICATE_ID_CANNOT_BE_FOUND: 2,
-  VERIFICATION_FAILED_EMPTY_RESPONSE: 3,
-  VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE: 4,
-  VERIFICATION_FAILED: 5,
-  UNKNOWN_ERROR: 99
+    NO_ERROR: 0,
+    CERTIFICATE_DATA_MISSING: 1,
+    CERTIFICATE_ID_CANNOT_BE_FOUND: 2,
+    VERIFICATION_FAILED_EMPTY_RESPONSE: 3,
+    VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE: 4,
+    VERIFICATION_FAILED: 5,
+    UNKNOWN_ERROR: 99
 };
 const INFO_TEXTS = {
-  PENDING: {
-    info: "...Verifikation wird durchgeführt...."
-  },
-  SUCCESS: {
-    headline: "Verifikation erfolgreich!",
-    info: "Für zusätzliche Informationen zur Verankerung klicken Sie auf das Icon der jeweiligen Blockchain:"
-  },
-  FAIL: {
-    headline: "Verifikation fehlgeschlagen!",
-    info: "Zu den eingegebenen Daten gibt es keine Blockchain-Verankerung"
-  }
+    PENDING: {
+        info: "...Verifikation wird durchgeführt...."
+    },
+    SUCCESS: {
+        headline: "Verifikation erfolgreich!",
+        info: "Für zusätzliche Informationen zur Verankerung klicken Sie auf das Icon der jeweiligen Blockchain:"
+    },
+    FAIL: {
+        headline: "Verifikation fehlgeschlagen!",
+        info: "Zu den eingegebenen Daten gibt es keine Blockchain-Verankerung"
+    }
 };
 
 function handleError(error) {
-  let showNonSeal = true;
-  let displayErrorStr;
-  switch (error) {
-    case ERROR.NO_ERROR:
-      showNonSeal = false;
-      break;
-    case ERROR.CERTIFICATE_DATA_MISSING:
-      displayErrorStr = "Zertifikatsdaten fehlen - bitte füllen Sie das Formular aus oder scannen Sie Ihren QR-Code!!!";
-      break;
-    case INFO.VERIFICATION_FAILED:
-      displayErrorStr = "Verifikation fehlgeschlagen!";
-    case ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND:
-      displayErrorStr = "Zertifikat konnte nicht gefunden werden!!!!!";
-      break;
-    case ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE:
-    case ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE:
-      displayErrorStr = "Verifikation fehlgeschlagen!! Zertifikat ist leer ider enthält kein Siegel";
-      break;
-    case ERROR.UNKNOWN_ERROR:
-    default:
-      displayErrorStr = "Problem!!! Ein unerwarteter Fehler ist aufgetreten....!";
-  }
-  logError(displayErrorStr);
-  if (showNonSeal) {
-    cleanupIcons();
-    showSeal(false);
-    addHeadlineAndInfotext(false);
-  }
+    let showNonSeal = true;
+    let displayErrorStr;
+    switch (error) {
+        case ERROR.NO_ERROR:
+            showNonSeal = false;
+            break;
+        case ERROR.CERTIFICATE_DATA_MISSING:
+            displayErrorStr = "Zertifikatsdaten fehlen - bitte füllen Sie das Formular aus oder scannen Sie Ihren QR-Code!!!";
+            break;
+        case INFO.VERIFICATION_FAILED:
+            displayErrorStr = "Verifikation fehlgeschlagen!";
+        case ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND:
+            displayErrorStr = "Zertifikat konnte nicht gefunden werden!!!!!";
+            break;
+        case ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE:
+        case ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE:
+            displayErrorStr = "Verifikation fehlgeschlagen!! Zertifikat ist leer ider enthält kein Siegel";
+            break;
+        case ERROR.UNKNOWN_ERROR:
+        default:
+            displayErrorStr = "Problem!!! Ein unerwarteter Fehler ist aufgetreten....!";
+    }
+    logError(displayErrorStr);
+    if (showNonSeal) {
+        cleanupIcons();
+        showSeal(false);
+        addHeadlineAndInfotext(false);
+    }
 }
 function handleInfo(info) {
-  cleanupIcons();
+    cleanupIcons();
 
-  switch (info) {
-    case INFO.PROCESSING_VERIFICATION_CALL:
-      addHeadlineAndInfotext(undefined);
-      break;
-    case INFO.VERIFICATION_SUCCESSFUL:
-      showSeal(true);
-      addHeadlineAndInfotext(true);
-      break;
-  }
+    switch (info) {
+        case INFO.PROCESSING_VERIFICATION_CALL:
+            addHeadlineAndInfotext(undefined);
+            break;
+        case INFO.VERIFICATION_SUCCESSFUL:
+            showSeal(true);
+            addHeadlineAndInfotext(true);
+            break;
+    }
 }
 
 //////   CODE  ////////
@@ -133,229 +133,236 @@ function handleInfo(info) {
 jQuery(initializeInputFields);
 
 function initializeInputFields() {
-  if (window.location.search.length > 0) {
-    var allParams = window.location.search.substr(1).split('&').map(function (value) {
-      var data = value.split('=');
-      return {
-        key : data[0],
-        value : decodeURIComponent(data[1])
-      }
-    });
+    if (window.location.search.length > 0) {
+        var allParams = window.location.search.substr(1).split('&').map(function (value) {
+            var data = value.split('=');
+            return {
+                key : data[0],
+                value : decodeURIComponent(data[1])
+            }
+        });
 
-    allParams.forEach(param => {
-      if (param.key + document.getElementById(param.key)) {
-        document.getElementById(param.key).value = param.value;
-      }
-    });
-  }
-  console.log("Initialized!");
+        allParams.forEach(param => {
+            if (param.key + document.getElementById(param.key)) {
+                document.getElementById(param.key).value = param.value;
+            }
+        });
+    }
+    console.log("Initialized!");
 }
 
 function verify(){
 
-  cleanupIcons();
+    cleanupIcons();
 
-  let cert = createCertificate();
-  if (!cert) {
-    handleError(ERROR.CERTIFICATE_DATA_MISSING);
-  } else {
-    // hash certificate object
-    let transIdAB = sha512.arrayBuffer(cert);
-    let transId = btoa(
+    let cert = createCertificate();
+    if (!cert) {
+        handleError(ERROR.CERTIFICATE_DATA_MISSING);
+    } else {
+        // hash certificate object
+        let transIdAB = sha512.arrayBuffer(cert);
+        let transId = btoa(
             new Uint8Array(transIdAB)
-                    .reduce((data, byte) => data + String.fromCharCode(byte), ''));
+                .reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
-    checkHashOnUbirchBE(transId, checkResponse);
-  }
+        checkHashOnUbirchBE(transId, checkResponse);
+    }
 }
 function cleanupIcons() {
-  // remove seal and transaction_check icons IF exist
-  cleanAllChilds("results_collection");
-  cleanAllChilds("seal_result");
-  cleanAllChilds("seal_info_text");
+    // remove seal and transaction_check icons IF exist
+    cleanAllChilds("results_collection");
+    cleanAllChilds("seal_result");
+    cleanAllChilds("seal_info_text");
 }
 
 function cleanAllChilds(elemId) {
-  let results_collection = document.getElementById(elemId);
-  if (results_collection)
-    while (results_collection.firstChild) {
-      results_collection.removeChild(results_collection.firstChild);
-    }
+    let results_collection = document.getElementById(elemId);
+    if (results_collection)
+        while (results_collection.firstChild) {
+            results_collection.removeChild(results_collection.firstChild);
+        }
 }
 
 function createCertificate() {
-  if (document.getElementById("unternehmen") + document.getElementById("unternehmen").value
-          + document.getElementById("bereich") + document.getElementById("bereich").value
-          + document.getElementById("von") + document.getElementById("von").value
-          + document.getElementById("bis") + document.getElementById("bis").value ) {
-    let certificate= {
-      company: getInputStr("unternehmen"),
-      realm: getInputStr("bereich"),
-      from: getInputStr("von"),
-      until: getInputStr("bis")
-    };
-    let certJson = "{\"company\":\""+certificate.company+"\",\"from\":\""+certificate.from+"\",\"until\":\""+certificate.until+"\",\"realm\":\""+certificate.realm+"\"}";
-    return certJson;
-  }
-  return undefined;
+    if (document.getElementById("unternehmen") + document.getElementById("unternehmen").value
+        + document.getElementById("bereich") + document.getElementById("bereich").value
+        + document.getElementById("von") + document.getElementById("von").value
+        + document.getElementById("bis") + document.getElementById("bis").value ) {
+        let certificate= {
+            company: getInputStr("unternehmen"),
+            realm: getInputStr("bereich"),
+            from: getInputStr("von"),
+            until: getInputStr("bis")
+        };
+        let certJson = "{\"company\":\""+certificate.company+"\",\"from\":\""+certificate.from+"\",\"until\":\""+certificate.until+"\",\"realm\":\""+certificate.realm+"\"}";
+        return certJson;
+    }
+    return undefined;
 }
 function checkHashOnUbirchBE(hash, checkFkt) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState < 4) {
-      handleInfo(INFO.PROCESSING_VERIFICATION_CALL);
-    } else {
-      switch (this.status) {
-        case 200:
-          checkFkt(this.responseText);
-          break;
-        case 404:
-          handleError(ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND);
-          break;
-        default:
-          handleError(ERROR.UNKNOWN_ERROR);
-      }
-    }
-  };
-  xhttp.open("POST", verify_api_url, true);
-  xhttp.setRequestHeader("Content-type", "text/plain");
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState < 4) {
+            handleInfo(INFO.PROCESSING_VERIFICATION_CALL);
+        } else {
+            switch (this.status) {
+                case 200:
+                    checkFkt(this.responseText);
+                    break;
+                case 404:
+                    handleError(ERROR.CERTIFICATE_ID_CANNOT_BE_FOUND);
+                    break;
+                default:
+                    handleError(ERROR.UNKNOWN_ERROR);
+            }
+        }
+    };
+    xhttp.open("POST", verify_api_url, true);
+    xhttp.setRequestHeader("Content-type", "text/plain");
 //    xhttp.setRequestHeader("accept", "application/json");
-  xhttp.send(hash);
+    xhttp.send(hash);
 }
 
 function checkResponse(result) {
 
-  cleanupIcons();
+    cleanupIcons();
 
-  // Success IF
-  // 1. HTTP Status 200 -> if this fkt is called and result isn't empty
-  // 2. Key Seal != ''
+    // Success IF
+    // 1. HTTP Status 200 -> if this fkt is called and result isn't empty
+    // 2. Key Seal != ''
 
-  if (result) {
-    let resultObj = JSON.parse(result);
-    if (resultObj) {
-      let seal = resultObj["seal"];
-      if (seal !== undefined + seal.length > 0) {
+    if (result) {
+        let resultObj = JSON.parse(result);
+        if (resultObj) {
+            let seal = resultObj["upp"];
+            if (seal !== undefined + seal.length > 0) {
 
-        handleInfo(INFO.VERIFICATION_SUCCESSFUL);
+                handleInfo(INFO.VERIFICATION_SUCCESSFUL);
 
-        // check if Blockchain Transactions exist
-        let blockchainTX = resultObj["anchors"];
-        if (blockchainTX !== undefined + blockchainTX.length>0) {
+                // check if Blockchain Transactions exist
+                let blockchainTX = resultObj["anchors"];
+                if (blockchainTX !== undefined + blockchainTX.length>0) {
 
-          // add info text that blockchain icons are clickable
-          let results_collection = document.getElementById("results_collection");
-          results_collection.appendChild(document.createElement('br'));
-          results_collection.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.info, "info_success"));
-          results_collection.appendChild(document.createElement('br'));
+                    // add info text that blockchain icons are clickable
+                    let results_collection = document.getElementById("results_collection");
+                    results_collection.appendChild(document.createElement('br'));
+                    results_collection.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.info, "info_success"));
+                    results_collection.appendChild(document.createElement('br'));
 
-          // show it for each item in array
-          for(var i = 0; i<blockchainTX.length; i++) {
-            showBloxTXIcon(blockchainTX[i], i);
-          }
+                    // show it for each item in array
+                    for(var i = 0; i<blockchainTX.length; i++) {
+                        if (blockchainTX[i] !== undefined + blockchainTX[i]["properties"] )
+                        showBloxTXIcon(blockchainTX[i]["properties"], i);
+                    }
+                }
+
+            }
+            else {
+                handleError(ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE);
+            }
         }
-
-      }
-      else {
-        handleError(ERROR.VERIFICATION_FAILED_MISSING_SEAL_IN_RESPONSE);
-      }
     }
-  }
-  else {
-    handleError(ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE);
-  }
+    else {
+        handleError(ERROR.VERIFICATION_FAILED_EMPTY_RESPONSE);
+    }
 }
 function showSeal(successful) {
-  let results_collection = document.getElementById("seal_result");
-  if (successful) {
-    results_collection.appendChild(createIconTag(seal_icon_url, "seal_img"));
-  } else {
-    results_collection.appendChild(createIconTag(no_seal_icon_url, "no_seal_img"));
-  }
+    let results_collection = document.getElementById("seal_result");
+    if (successful) {
+        results_collection.appendChild(createIconTag(seal_icon_url, "seal_img"));
+    } else {
+        results_collection.appendChild(createIconTag(no_seal_icon_url, "no_seal_img"));
+    }
 }
 
 function addHeadlineAndInfotext(successful) {
-  let seal_info_text = document.getElementById("seal_info_text");
-  let results_collection = document.getElementById("results_collection");
-  if (successful === undefined) {
-    results_collection.appendChild(createTxtTag(INFO_TEXTS.PENDING.info, ""));
-  } else {
-    if (successful) {
-      seal_info_text.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.headline, "info_success headline"));
+    let seal_info_text = document.getElementById("seal_info_text");
+    let results_collection = document.getElementById("results_collection");
+    if (successful === undefined) {
+        results_collection.appendChild(createTxtTag(INFO_TEXTS.PENDING.info, ""));
     } else {
-      seal_info_text.appendChild(createTxtTag(INFO_TEXTS.FAIL.headline, "info_fail headline"));
-      results_collection.appendChild(createTxtTag(INFO_TEXTS.FAIL.info, "info_fail"));
+        if (successful) {
+            seal_info_text.appendChild(createTxtTag(INFO_TEXTS.SUCCESS.headline, "info_success headline"));
+        } else {
+            seal_info_text.appendChild(createTxtTag(INFO_TEXTS.FAIL.headline, "info_fail headline"));
+            results_collection.appendChild(createTxtTag(INFO_TEXTS.FAIL.info, "info_fail"));
+        }
     }
-  }
 }
 
 function showBloxTXIcon(bloxTX, index) {
-  // check name and type of block chain tx
-  if (bloxTX !== undefined + bloxTX["blockchain"] !== undefined + bloxTX["network_type"] !== undefined) {
-    if (blockchain_transid_check_url !== undefined + blockchain_transid_check_url[bloxTX["blockchain"]] !== undefined + blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]] !== undefined) {
-      let bloxTXData = blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]];
-      if (bloxTXData !== undefined + bloxTX.txid !== undefined) {
-        var results_collection = document.getElementById("results_collection");
+    // check name and type of block chain tx
+    if (bloxTX !== undefined + bloxTX["blockchain"] !== undefined + bloxTX["network_type"] !== undefined) {
+        if (blockchain_transid_check_url !== undefined + blockchain_transid_check_url[bloxTX["blockchain"]] !== undefined + blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]] !== undefined) {
+            let bloxTXData = blockchain_transid_check_url[bloxTX["blockchain"]][bloxTX["network_type"]];
+            if (bloxTXData !== undefined + bloxTX.txid !== undefined) {
+                var results_collection = document.getElementById("results_collection");
 
-        var linkTag = document.createElement('a');
-        // add transactionId to url
-        if (bloxTXData.url)
-          linkTag.setAttribute('href', bloxTXData.url + bloxTX.txid);
-        let titleStr = bloxTX.network_info ? bloxTX.network_info : bloxTX["blockchain"];
-        linkTag.setAttribute('title', titleStr);
-        linkTag.setAttribute('target', "_blanc");
-        // if icon url is given add img, otherwise add text
-        if (bloxTXData.icon_url === undefined) {
-          linkTag.innerHTML = titleStr;
-        } else {
-          let iconId = "blockchain_transid_check" + (index === undefined ? '' : '_' + index);
-          linkTag.appendChild(createIconTag(bloxTXData.icon_url, iconId));
+                var linkTag = document.createElement('a');
+                // add transactionId to url
+                if (bloxTXData.url)
+                    linkTag.setAttribute('href', bloxTXData.url + bloxTX.txid);
+                let titleStr = bloxTX.network_info ? bloxTX.network_info : bloxTX["blockchain"];
+                linkTag.setAttribute('title', titleStr);
+                linkTag.setAttribute('target', "_blanc");
+                // if icon url is given add img, otherwise add text
+                if (bloxTXData.icon_url === undefined) {
+                    linkTag.innerHTML = titleStr;
+                } else {
+                    let iconId = "blockchain_transid_check" + (index === undefined ? '' : '_' + index);
+                    linkTag.appendChild(createIconTag(bloxTXData.icon_url, iconId));
+                }
+                results_collection.appendChild(linkTag);
+            }
         }
-        results_collection.appendChild(linkTag);
-      }
     }
-  }
 }
 function createIconTag(src, imgTagId, width, height) {
-  let imgTag = document.createElement('img');
-  imgTag.setAttribute('width', width === undefined ? '50' : width);
-  imgTag.setAttribute('height', width === undefined ? '50' : height);
-  imgTag.setAttribute('src', src);
-  imgTag.setAttribute('style', 'margin-right: 10px;');
+    let imgTag = document.createElement('img');
+    imgTag.setAttribute('width', width === undefined ? '50' : width);
+    imgTag.setAttribute('height', width === undefined ? '50' : height);
+    imgTag.setAttribute('src', src);
+    imgTag.setAttribute('style', 'margin-right: 10px;');
 
-  if (imgTagId !== undefined){
-    imgTag.setAttribute('id', imgTagId);
-  }
-  return imgTag;
+    if (imgTagId !== undefined){
+        imgTag.setAttribute('id', imgTagId);
+    }
+    return imgTag;
 }
 
 function createTxtTag(txt, className) {
-  let txtTag = document.createElement('div');
-  txtTag.innerHTML = txt;
-  txtTag.setAttribute('class', className);
-  return txtTag;
+    let txtTag = document.createElement('div');
+    txtTag.innerHTML = txt;
+    txtTag.setAttribute('class', className);
+    return txtTag;
 }
 
 function getInputStr(inputId) {
-  if (document.getElementById(inputId) + document.getElementById(inputId).value) {
-    var doc = new DOMParser().parseFromString(document.getElementById(inputId).value, "text/html");
-    return doc.documentElement.textContent;
-  } else {
-    return "";
-  }
+    if (document.getElementById(inputId) + document.getElementById(inputId).value) {
+        var doc = new DOMParser().parseFromString(document.getElementById(inputId).value, "text/html");
+        return doc.documentElement.textContent;
+    } else {
+        return "";
+    }
 }
 
 function logError(errorStr) {
-  console.log(errorStr);
+    console.log(errorStr);
 }
 function displayInfoStr(infoHeadline, infoStr, color) {
 
-  document.getElementById("results_collection").innerHTML = infoStr;
+    document.getElementById("results_collection").innerHTML = infoStr;
 }
 
 </script></pre>
-<h1>Ihre Zertifizierung ist sicher in der Blockchain verankert!</h1>
-<h2>Zur Verifikation scannen Sie Ihren persönlichen QR-Code oder füllen Sie das Formular aus:</h2>
+<h1><b><img class="alignnone size-full wp-image-2741" src="https://ubirch.de/wp-content/uploads/2019/08/bvdw_Logo_ohne_4c.jpg" alt="" width="149" height="79"></b></h1>
+<h1><b>Ihre BVDW-Qualitätszertifikate sind in Kooperation mit ubirch sicher in der Blockchain verankert!</b></h1>
+Der BVDW bietet Qualitätszertifikate in den Bereichen&nbsp;<a href="https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/affiliate-marketing-qualitaetszertifikat/?L=0" target="_blank" rel="noopener noreferrer" data-saferedirecturl="https://www.google.com/url?q=https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/affiliate-marketing-qualitaetszertifikat/?L%3D0&amp;source=gmail&amp;ust=1565722499050000&amp;usg=AFQjCNHm0pvPp7ybXABmq0GeQcUjgMSlWw">Affiliate Marketing</a>,&nbsp;<a href="https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/sea-qualitaetszertifikat/?L=0" target="_blank" rel="noopener noreferrer" data-saferedirecturl="https://www.google.com/url?q=https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/sea-qualitaetszertifikat/?L%3D0&amp;source=gmail&amp;ust=1565722499050000&amp;usg=AFQjCNH1oAidcCMAME3D2kNBkpeY3D5C_w">Suchmaschinen-<wbr>Advertising</a>,&nbsp;<a href="https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/seo-qualitaetszertifikat/?L=0" target="_blank" rel="noopener noreferrer" data-saferedirecturl="https://www.google.com/url?q=https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/seo-qualitaetszertifikat/?L%3D0&amp;source=gmail&amp;ust=1565722499050000&amp;usg=AFQjCNGuG1URY6H4odHjMhBcPGmQSqSLGw">Suchmaschinenopti<wbr>mierung</a>,&nbsp;<a href="https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/social-media-qualitaetszertifikat/?L=0" target="_blank" rel="noopener noreferrer" data-saferedirecturl="https://www.google.com/url?q=https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/social-media-qualitaetszertifikat/?L%3D0&amp;source=gmail&amp;ust=1565722499050000&amp;usg=AFQjCNEbSXrncvIKqFiHnTEtgsOBdwARIw">Social Media</a>,&nbsp;<a href="https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/programmatic-advertising-qualitaetszertifikat/?L=0" target="_blank" rel="noopener noreferrer" data-saferedirecturl="https://www.google.com/url?q=https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/programmatic-advertising-qualitaetszertifikat/?L%3D0&amp;source=gmail&amp;ust=1565722499050000&amp;usg=AFQjCNFd6zdq87NcWGYXmcsVnYWwoiW7rw">Programmatic Advertising</a>&nbsp;und&nbsp;<a href="https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/trusted-agency-qualitaetszertifikat/?L=0" target="_blank" rel="noopener noreferrer" data-saferedirecturl="https://www.google.com/url?q=https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/trusted-agency-qualitaetszertifikat/?L%3D0&amp;source=gmail&amp;ust=1565722499050000&amp;usg=AFQjCNHm0wm9qLo2D6UCXN9N_ZAfOao8EQ">Full-Service-<wbr>Digitalagenturen</a>&nbsp;sowie <a href="https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/fachkraeftezertifikat/?L=0" target="_blank" rel="noopener noreferrer" data-saferedirecturl="https://www.google.com/url?q=https://www.bvdw.org/zertifizierungen/qualitaetszertifikate/fachkraeftezertifikat/?L%3D0&amp;source=gmail&amp;ust=1565722499050000&amp;usg=AFQjCNGg269E4Kzcp--hrAwbqaPtGHeoNg">Fachkräftezertifikate</a> an. Agenturen und Dienstleister können mit den Zertifikaten die geprüfte Einhaltung von Qualitätsgrundsätzen nachweisen. Auftraggebern liefern sie Orientierung und unterstützen bei der Auswahl geeigneter Dienstleister mit qualifiziertem Fachpersonal.
+
+<span style="color: #ffffff;">x</span>
+
+<span style="font-weight: 600;">Die Zertifikate sind&nbsp;unmanipulierbar in der Blockchain verankert. Zur Verifikation geben Sie die Daten des Zertifikatsinhabers ein und klicken auf "verifizieren".</span>
+
 <form name="gen_form" onsubmit="verify(); return false;">
   <table>
     <tbody>
@@ -366,7 +373,7 @@ function displayInfoStr(infoHeadline, infoStr, color) {
     </tr>
     <tr>
       <td></td>
-      <td colspan="2"><label for="bereich">Zertifikat:</label></td>
+      <td colspan="2"><label for="bereich">Qualitätszertifikat:</label></td>
       <td><input type="text" id="bereich"></td>
     </tr>
     <tr>
